@@ -1,6 +1,7 @@
 <?php
 /**
- * Describe plugin here
+ * MyBB Connect: allow mybb connect to Elgg and update activity
+ * Author: Thang Nguyen
  */
 
 elgg_register_event_handler('init', 'system', 'mybb_connect_init');
@@ -34,14 +35,17 @@ function mybb_connect_init() {
                 );
 }
 
-function mybb_connect_register_user($username, $password, $salt, $email) 
+//sample call: http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.registeruser&username=test&password=123&salt=traudatrSSMpxmv&email=traudat@email.com
+function mybb_connect_register_user($username, $password, $salt, $email) {
 	//todo: check if the request comes from the same server
 	//todo: register user
-	require_once dirname(__FILE__) . '/lib/users.php';
+	require_once '../../engine/lib/users.php';
 	
 	$elgg_user = get_user_by_username($username);
 	if ($elgg_user)	//user already exist
 		return false;
+		
+	elgg_dump("mybb_connect_register_user: username not there");
 	
 	//return user guid to MyBB
 	return register_user($username, $salt, $username, $email);

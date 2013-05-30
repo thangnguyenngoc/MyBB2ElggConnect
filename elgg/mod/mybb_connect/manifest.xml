@@ -3,7 +3,7 @@
 	<name>MyBB Connect</name>
 	<author>Thang Nguyen</author>
 	<version>1.0</version>
-	<description>This plugin open API to MyBB and allow user's authentication & activities from MyBB are updated to Elgg</description>
+	<description>This plugin open API to MyBB and allow user's authentication/activities from MyBB are updated to Elgg</description>
 	<website>http://www.atemix.com/</website>
 	<copyright>(C) Atemix 2013</copyright>
 	<license>GNU General Public License version 2</license>
