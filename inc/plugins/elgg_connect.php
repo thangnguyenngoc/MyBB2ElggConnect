@@ -58,7 +58,6 @@ function elggconnect_info()
 		`mbb_uid` int(10) NOT NULL default '0',
 		`mybb_username` varchar(120) NOT NULL DEFAULT '',
 		`elgg_guid` bigint(20) unsigned NOT NULL,
-		`elgg_username` varchar(128) NOT NULL DEFAULT '',
 		`elgg_password` varchar(32) NOT NULL DEFAULT '',
 		`elgg_salt` varchar(8) NOT NULL DEFAULT '',
 		PRIMARY KEY  (id))");

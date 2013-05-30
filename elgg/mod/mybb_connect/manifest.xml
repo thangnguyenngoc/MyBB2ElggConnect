@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin_manifest xmlns="http://www.elgg.org/plugin_manifest/1.8">
-	<name>My Plugin</name>
-	<author>My Name</author>
+	<name>MyBB Connect</name>
+	<author>Thang Nguyen</author>
 	<version>1.0</version>
-	<description>This is a description of my plugin and its features.</description>
-	<website>http://www.elgg.org/</website>
-	<copyright>(C) My Name or Company 2012</copyright>
+	<description>This plugin open API to MyBB and allow user's authentication & activities from MyBB are updated to Elgg</description>
+	<website>http://www.atemix.com/</website>
+	<copyright>(C) Atemix 2013</copyright>
 	<license>GNU General Public License version 2</license>
 
 	<requires>
