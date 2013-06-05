@@ -25,7 +25,6 @@ function mybb_connect_init() {
                 "mybb_connect_register_user", 
                  array( 'username' => array ('type' => 'string'),
                        'password' => array ('type' => 'string'),
-					    'salt' => array ('type' => 'string'),
                        'email' => array ('type' => 'string'),
                      ),
                  'MyBB connect - register new user to Elgg',
@@ -33,10 +32,21 @@ function mybb_connect_init() {
                  false,	//no user authentication key as the api only allow calls from the same server
                  false
                 );
+				
+	expose_function("mybb_connect.authenticateuser", 
+                "mybb_connect_authenticate_user", 
+                 array( 'username' => array ('type' => 'string'),
+                       'password' => array ('type' => 'string'),
+                     ),
+                 'MyBB connect - authenticate an user to Elgg',
+                 'GET',
+                 false,	//no user authentication key as the api only allow calls from the same server
+                 false
+                );
 }
 
-//sample call: http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.registeruser&username=test&password=123&salt=traudatrSSMpxmv&email=traudat@email.com
-function mybb_connect_register_user($username, $password, $salt, $email) {
+//sample call: http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.registeruser&username=test&password=123&email=traudat@email.com
+function mybb_connect_register_user($username, $password, $email) {
 	//todo: check if the request comes from the same server
 	//todo: register user
 	require_once '../../engine/lib/users.php';
@@ -48,5 +58,20 @@ function mybb_connect_register_user($username, $password, $salt, $email) {
 	elgg_dump("mybb_connect_register_user: username not there");
 	
 	//return user guid to MyBB
-	return register_user($username, $salt, $username, $email);
+	return register_user($username, $password, $email);
+}
+
+//sample call: http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.authenticateuser&username=test&password=123
+function mybb_connect_authenticate_user($username, $password) {
+	//todo: check if the request comes from the same server
+	//todo: register user
+	require_once '../../engine/lib/users.php';
+	require_once '../../engine/lib/sessions.php';
+	
+	$elgg_user = get_user_by_username($username);
+	if ($elgg_user)	//user already exist
+		//return false;
+	
+	//return result to MyBB
+	return login($elgg_user, true);
 }
