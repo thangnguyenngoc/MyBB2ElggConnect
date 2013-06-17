@@ -7,10 +7,11 @@ Source code is created as in development structure
 
 MyBB is the root. Elgg is put into Elgg folder
 
-root
---- elgg
-      --- mod
-            --- mybb_connect //the plugin for Elgg is here
---- mod
-      --- mybb_connect //the plugin for MyBB is here
+root					//root folder of MyBB<br />
+====elgg				//Elgg site is here<br />
+========mod<br />
+============mybb_connect	//the plugin for Elgg is here<br />
+====inc<br />
+========plugins			//the plugin for MyBB is here<br />
+
   
