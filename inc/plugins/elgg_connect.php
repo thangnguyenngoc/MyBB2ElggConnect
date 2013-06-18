@@ -106,6 +106,164 @@ function elgg_connect_global_start()
 	{
 		//migrate to elgg and update db
 		$log->LogDebug("Not Found Elgg id");
+		
+		//call elgg api to create user
+		$eggusername = $mybb->user['username'];
+		$eggpassword = $mybb->user['password'];
+		$eggemail = $mybb->user['email'];
+		$url = $_SERVER['HTTP_HOST'].'elgg/services/api/rest/xml/?method=mybb_connect.registeruser';
+		
+		$log->LogDebug('Start to call Elgg api: '.$url);
+		
+		$call = array(
+			"username" => $mybb->user['username'],
+			"password" => $mybb->user['password'],
+			"email" => $mybb->user['email'],
+			);
+			
+		$key = array(
+			"public" => null,
+			"private" => null,
+			);
+		
+		$result = send_api_get_call($url, $call, $key);
+		
+		$log->LogDebug('The returned value is '.$result);
+/*
+		//store elgg user profile in mybb		
+		$elg_entity=array(
+			'mbb_uid' => $mybb->user['uid'],
+			'mybb_username' => $mybb->user['username'],
+			'elgg_guid' => '1',
+			'elgg_password' => 'password',
+			'elgg_salt' => 'salt',
+		);
+		$db->insertquery("elggconnect_users", $elg_entity);*/
 	}
+}
+
+/**
+ * Send a raw API call to an elgg api endpoint. Copied from Elgg engine/lib/web_services.php
+ *
+ * @param array  $keys         The api keys.
+ * @param string $url          URL of the endpoint.
+ * @param array  $call         Associated array of "variable" => "value"
+ * @param string $method       GET or POST
+ * @param string $post_data    The post data
+ * @param string $content_type The content type
+ *
+ * @return string
+ */
+function send_api_call(array $keys, $url, array $call, $method = 'GET', $post_data = '',
+$content_type = 'application/octet-stream') {
+
+	global $CONFIG;
+
+	$headers = array();
+	$encoded_params = array();
+
+	$method = strtoupper($method);
+	switch (strtoupper($method)) {
+		case 'GET' :
+		case 'POST' :
+			break;
+		default:
+			$msg = elgg_echo('NotImplementedException:CallMethodNotImplemented', array($method));
+			throw new NotImplementedException($msg);
+	}
+
+	// Time
+	$time = time();
+
+	// Nonce
+	$nonce = uniqid('');
+
+	// URL encode all the parameters
+	foreach ($call as $k => $v) {
+		$encoded_params[] = urlencode($k) . '=' . urlencode($v);
+	}
+
+	$params = implode('&', $encoded_params);
+
+	// Put together the query string
+	$url = $url . "?" . $params;
+
+	// Construct headers
+	$posthash = "";
+	if ($method == 'POST') {
+		$posthash = calculate_posthash($post_data, 'md5');
+	}
+
+	if ((isset($keys['public'])) && (isset($keys['private']))) {
+		$headers['X-Elgg-apikey'] = $keys['public'];
+		$headers['X-Elgg-time'] = $time;
+		$headers['X-Elgg-nonce'] = $nonce;
+		$headers['X-Elgg-hmac-algo'] = 'sha1';
+		$headers['X-Elgg-hmac'] = calculate_hmac('sha1',
+			$time,
+			$nonce,
+			$keys['public'],
+			$keys['private'],
+			$params,
+			$posthash
+		);
+	}
+	if ($method == 'POST') {
+		$headers['X-Elgg-posthash'] = $posthash;
+		$headers['X-Elgg-posthash-algo'] = 'md5';
+
+		$headers['Content-type'] = $content_type;
+		$headers['Content-Length'] = strlen($post_data);
+	}
+
+	// Opt array
+	$http_opts = array(
+		'method' => $method,
+		'header' => serialise_api_headers($headers)
+	);
+	if ($method == 'POST') {
+		$http_opts['content'] = $post_data;
+	}
+
+	$opts = array('http' => $http_opts);
+
+	// Send context
+	$context = stream_context_create($opts);
+
+	// Send the query and get the result and decode.
+	$results = file_get_contents($url, false, $context);
+
+	return $results;
+}
+
+/**
+ * Send a GET call. Copied from Elgg engine/lib/web_services.php
+ *
+ * @param string $url  URL of the endpoint.
+ * @param array  $call Associated array of "variable" => "value"
+ * @param array  $keys The keys dependant on chosen authentication method
+ *
+ * @return string
+ */
+function send_api_get_call($url, array $call, array $keys) {
+	return send_api_call($keys, $url, $call);
+}
+	
+/**
+ * Utility function to serialise a header array into its text representation.  Copied from Elgg engine/lib/web_services.php
+ *
+ * @param array $headers The array of headers "key" => "value"
+ *
+ * @return string
+ * @access private
+ */
+function serialise_api_headers(array $headers) {
+	$headers_str = "";
+
+	foreach ($headers as $k => $v) {
+		$headers_str .= trim($k) . ": " . trim($v) . "\r\n";
+	}
+
+	return trim($headers_str);
 }
 ?>
