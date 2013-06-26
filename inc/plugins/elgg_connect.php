@@ -111,9 +111,7 @@ function elgg_connect_global_start()
 		$eggusername = $mybb->user['username'];
 		$eggpassword = $mybb->user['password'];
 		$eggemail = $mybb->user['email'];
-		$url = $_SERVER['HTTP_HOST'].'elgg/services/api/rest/xml/?method=mybb_connect.registeruser';
-		
-		$log->LogDebug('Start to call Elgg api: '.$url);
+		$url = $_SERVER['HTTP_HOST'].'/elgg/services/api/rest/xml/?method=mybb_connect.registeruser';
 		
 		$call = array(
 			"username" => $mybb->user['username'],
@@ -125,6 +123,8 @@ function elgg_connect_global_start()
 			"public" => null,
 			"private" => null,
 			);
+			
+		$log->LogDebug('Start to call Elgg api: '.$url.'-user:'.$call['username'].'-pw:'.$call['password'].'-email:'.$call['email']);
 		
 		$result = send_api_get_call($url, $call, $key);
 		
