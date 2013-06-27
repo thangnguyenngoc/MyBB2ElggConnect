@@ -45,7 +45,7 @@ function mybb_connect_init() {
                 );
 }
 
-//sample call: http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.registeruser&username=test&password=123&email=traudat@email.com
+//sample call: http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.registeruser&username=test&password=123&email=test@email.com
 function mybb_connect_register_user($username, $password, $email) {
 	//todo: check if the request comes from the same server
 	//todo: register user
@@ -58,7 +58,7 @@ function mybb_connect_register_user($username, $password, $email) {
 	if ($elgg_user)	//user already exist
 	{
 		$log->LogDebug('Existing user: '.$username.'. Registration cancelled.');
-		return false;
+		return true;
 	}
 		
 	$log->LogDebug('Start to register new user: '.$username);

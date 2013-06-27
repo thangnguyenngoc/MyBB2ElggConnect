@@ -123,12 +123,8 @@ function elgg_connect_global_start()
 			"public" => null,
 			"private" => null,
 			);
-			
-		$log->LogDebug('Start to call Elgg api: '.$url.'-user:'.$call['username'].'-pw:'.$call['password'].'-email:'.$call['email']);
 		
 		$result = send_api_get_call($url, $call, $key);
-		
-		$log->LogDebug('The returned value is '.$result);
 /*
 		//store elgg user profile in mybb		
 		$elg_entity=array(
@@ -186,7 +182,7 @@ $content_type = 'application/octet-stream') {
 	$params = implode('&', $encoded_params);
 
 	// Put together the query string
-	$url = $url . "?" . $params;
+	$url = $url . "&" . $params;
 
 	// Construct headers
 	$posthash = "";
@@ -229,9 +225,16 @@ $content_type = 'application/octet-stream') {
 
 	// Send context
 	$context = stream_context_create($opts);
+	
+	require_once(MYBB_ROOT.'KLogger.php');
+	$log = new KLogger(dirname(__FILE__) , KLogger::DEBUG );
+	$log->LogDebug('Call url: '.$url);
+	$log->LogDebug('$opts: '.print_r($opts, true));
 
 	// Send the query and get the result and decode.
 	$results = file_get_contents($url, false, $context);
+	
+	$log->LogDebug('The returned value is '.print_r($results,true));
 
 	return $results;
 }
