@@ -50,10 +50,11 @@ $db->write_query("
 	(`id` int(10) NOT NULL auto_increment,
 	`mbb_uid` int(10) NOT NULL default '0',
 	`mybb_username` varchar(120) NOT NULL DEFAULT '',
+	`mybb_email` varchar(120) NOT NULL DEFAULT '',
 	`elgg_guid` bigint(20) unsigned NOT NULL,
 	`elgg_password` varchar(32) NOT NULL DEFAULT '',
-	`elgg_salt` varchar(8) NOT NULL DEFAULT '',
-	PRIMARY KEY  (id))");
+	`created_date` bigint(30) NOT NULL DEFAULT '0',
+	PRIMARY KEY  (`id`))");
 }
 
 
@@ -85,6 +86,9 @@ function elgg_connect_deactivate()
 
 function elgg_connect_global_start()
 {
+	if (!elgg_connect_is_installed())
+		return true;
+
 	global $mybb, $db;
 	
 	//exit if user not logged in
@@ -111,7 +115,7 @@ function elgg_connect_global_start()
 		$eggusername = $mybb->user['username'];
 		$eggpassword = $mybb->user['password'];
 		$eggemail = $mybb->user['email'];
-		$url = $_SERVER['HTTP_HOST'].'/elgg/services/api/rest/xml/?method=mybb_connect.registeruser';
+		$url = $_SERVER['HTTP_HOST'].'/elgg/services/api/rest/json/?method=mybb_connect.registeruser';
 		
 		$call = array(
 			"username" => $mybb->user['username'],
@@ -124,25 +128,32 @@ function elgg_connect_global_start()
 			"private" => null,
 			);
 		
+		//check for 'http://' in url
 		if (!preg_match('/^https?:\/\//', $url)) {
 			$url = 'http://' . $url;
 		}
 		
-		$url = 'http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.registeruser';
-		
+		//$url is changed to the full url after the call
 		$result = send_api_get_call($url, $call, $key);
 		
-		$log->LogDebug('The returned value is '.print_r($result,true).' from '.$url);
-/*
-		//store elgg user profile in mybb		
-		$elg_entity=array(
-			'mbb_uid' => $mybb->user['uid'],
-			'mybb_username' => $mybb->user['username'],
-			'elgg_guid' => '1',
-			'elgg_password' => 'password',
-			'elgg_salt' => 'salt',
-		);
-		$db->insertquery("elggconnect_users", $elg_entity);*/
+		$log->LogDebug('Called to: '.$url);
+		
+		//check for $result
+		$json_output = json_decode($result);
+		$log->LogDebug('The returned value is '.print_r($json_output,true));
+		if ($json_output->{'status'}==0 && $json_output->{'result'}>0)
+		{
+			//store elgg user profile in mybb		
+			$elg_entity=array(
+				'mbb_uid' => $mybb->user['uid'],
+				'mybb_username' => $mybb->user['username'],
+				'mybb_email' => $mybb->user['email'],
+				'elgg_guid' => $json_output->{'result'},
+				'elgg_password' => $mybb->user['password'],
+				'created_date' => TIME_NOW,
+			);
+			$db->insert_query("elggconnect_users", $elg_entity);
+		}
 	}
 }
 
