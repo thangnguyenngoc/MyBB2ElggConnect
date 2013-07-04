@@ -124,7 +124,15 @@ function elgg_connect_global_start()
 			"private" => null,
 			);
 		
+		if (!preg_match('/^https?:\/\//', $url)) {
+			$url = 'http://' . $url;
+		}
+		
+		$url = 'http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.registeruser';
+		
 		$result = send_api_get_call($url, $call, $key);
+		
+		$log->LogDebug('The returned value is '.print_r($result,true).' from '.$url);
 /*
 		//store elgg user profile in mybb		
 		$elg_entity=array(
@@ -150,7 +158,7 @@ function elgg_connect_global_start()
  *
  * @return string
  */
-function send_api_call(array $keys, $url, array $call, $method = 'GET', $post_data = '',
+function send_api_call(array $keys, &$url, array $call, $method = 'GET', $post_data = '',
 $content_type = 'application/octet-stream') {
 
 	global $CONFIG;
@@ -226,16 +234,8 @@ $content_type = 'application/octet-stream') {
 	// Send context
 	$context = stream_context_create($opts);
 	
-	require_once(MYBB_ROOT.'KLogger.php');
-	$log = new KLogger(dirname(__FILE__) , KLogger::DEBUG );
-	$log->LogDebug('Call url: '.$url);
-	$log->LogDebug('$opts: '.print_r($opts, true));
-
 	// Send the query and get the result and decode.
 	$results = file_get_contents($url, false, $context);
-	
-	$log->LogDebug('The returned value is '.print_r($results,true));
-
 	return $results;
 }
 
@@ -248,7 +248,7 @@ $content_type = 'application/octet-stream') {
  *
  * @return string
  */
-function send_api_get_call($url, array $call, array $keys) {
+function send_api_get_call(&$url, array $call, array $keys) {
 	return send_api_call($keys, $url, $call);
 }
 	

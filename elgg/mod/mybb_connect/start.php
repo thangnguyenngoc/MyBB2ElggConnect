@@ -48,9 +48,9 @@ function mybb_connect_init() {
 //sample call: http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.registeruser&username=test&password=123&email=test@email.com
 function mybb_connect_register_user($username, $password, $email) {
 	//todo: check if the request comes from the same server
-	//todo: register user
 	require_once '../../engine/lib/users.php';
-	require_once('KLogger.php');
+	require_once 'KLogger.php';
+	require_once '../../engine/classes/SuccessResult.php';
 	
 	$log = new KLogger(dirname(__FILE__), KLogger::DEBUG );
 	
@@ -58,26 +58,23 @@ function mybb_connect_register_user($username, $password, $email) {
 	if ($elgg_user)	//user already exist
 	{
 		$log->LogDebug('Existing user: '.$username.'. Registration cancelled.');
-		return true;
+		return SuccessResult::getInstance('false');
 	}
 		
 	$log->LogDebug('Start to register new user: '.$username);
 	
 	//return user guid to MyBB
-	return register_user($username, $password, $username, $email);
+	$result = register_user($username, $password, $username, $email);
+	return SuccessResult::getInstance($result);
 }
 
 //sample call: http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.authenticateuser&username=test&password=123
 function mybb_connect_authenticate_user($username, $password) {
 	//todo: check if the request comes from the same server
-	//todo: register user
-	require_once '../../engine/lib/users.php';
 	require_once '../../engine/lib/sessions.php';
-	
-	$elgg_user = get_user_by_username($username);
-	if ($elgg_user)	//user already exist
-		//return false;
+	require_once '../../engine/classes/SuccessResult.php';
 	
 	//return result to MyBB
-	return login($elgg_user, true);
+	$result = login($elgg_user, true);
+	return SuccessResult::getInstance('false');;
 }
