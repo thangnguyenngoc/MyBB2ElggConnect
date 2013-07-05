@@ -43,14 +43,24 @@ function mybb_connect_init() {
                  false,	//no user authentication key as the api only allow calls from the same server
                  false
                 );
+				
+	expose_function("mybb_connect.checkloggedinuser", 
+                "mybb_connect_checkloggedin_user", 
+                 array( 'guid' => array ('type' => 'int'),
+                     ),
+                 'MyBB connect - check if a guid is already logged in Elgg. If another guid logged in, force it to log out',
+                 'GET',
+                 false,	//no user authentication key as the api only allow calls from the same server
+                 false
+                );
 }
 
 //sample call: http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.registeruser&username=test&password=123&email=test@email.com
 function mybb_connect_register_user($username, $password, $email) {
 	//todo: check if the request comes from the same server
 	require_once '../../engine/lib/users.php';
-	require_once 'KLogger.php';
 	require_once '../../engine/classes/SuccessResult.php';
+	require_once 'KLogger.php';
 	
 	$log = new KLogger(dirname(__FILE__), KLogger::DEBUG );
 	
@@ -73,8 +83,49 @@ function mybb_connect_authenticate_user($username, $password) {
 	//todo: check if the request comes from the same server
 	require_once '../../engine/lib/sessions.php';
 	require_once '../../engine/classes/SuccessResult.php';
+	require_once '../../engine/classes/ElggUser.php';
+	require_once 'KLogger.php';
 	
-	//return result to MyBB
-	$result = login($elgg_user, true);
-	return SuccessResult::getInstance('false');;
+	$log = new KLogger(dirname(__FILE__), KLogger::DEBUG );
+	
+	if (true===elgg_authenticate($username, $password))
+	{
+		$elgg_user = new ElggUser($username);
+		//return result to MyBB
+		$result = login($elgg_user, true);
+		
+		$log->LogDebug('Authenticate user: '.print_r($result, true));
+		
+		return SuccessResult::getInstance($result);
+	}	
+	return  SuccessResult::getInstance(false);
+}
+
+function mybb_connect_checkloggedin_user($guid)
+{
+	require_once '../../engine/lib/sessions.php';
+	require_once '../../engine/classes/SuccessResult.php';
+	require_once 'KLogger.php';
+	
+	$log = new KLogger(dirname(__FILE__), KLogger::DEBUG );
+	
+	if ($guid==0)
+		return  SuccessResult::getInstance(false);
+	
+	$current_guid = elgg_get_logged_in_user_guid();
+	
+	$log->LogDebug('Current user: '.$current_guid);
+	
+	//log out if different user is logged in
+	if ($current_guid!=$guid && $current_guid>0)
+	{
+		logout();
+
+		return SuccessResult::getInstance(0);
+	}
+	else
+	{
+		//return the guid 
+		return SuccessResult::getInstance($current_guid);
+	}
 }

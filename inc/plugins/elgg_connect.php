@@ -42,6 +42,10 @@ function elgg_connect_info()
 	);
 }
 
+/**
+ * Create table to store information of migrated user
+ * 
+ */
 function elgg_connect_install()
 {
 global $db;
@@ -84,6 +88,12 @@ function elgg_connect_deactivate()
 {
 }
 
+/**
+ * Check if mybb user is already migrated to elgg and check for Elgg session to see if user is authenticated then authenticate the user
+ * Otherwise, migrate mybb user to elgg and store user information in table
+ *
+ * @return bool
+ */
 function elgg_connect_global_start()
 {
 	if (!elgg_connect_is_installed())
@@ -93,28 +103,101 @@ function elgg_connect_global_start()
 	
 	//exit if user not logged in
 	if($mybb->user['uid'] == 0)
-		exit;
+		return true;
 	
+	//=========================================================
 	//check if user already migrated to Elgg
 	$query = $db->simple_select("elggconnect_users", "*", "mbb_uid = '{$mybb->user['uid']}'", array("limit" => 1));
-	$elgg = $db->fetch_field($query);
+	$elgg = $db->fetch_array($query);
 	
 	require_once(MYBB_ROOT.'KLogger.php');
 	$log = new KLogger(dirname(__FILE__) , KLogger::DEBUG );
 	
-	if ($elgg['id'])
+	if ($elgg)
 	{
-		$log->LogDebug("Found Elgg id");
+		$log->LogDebug("Found Elgg id: ".print_r($elgg, true));
+		
+		//=========================================================
+		//call elgg api to check if user is already logged in
+		$url = $_SERVER['HTTP_HOST'].'/elgg/services/api/rest/json/?method=mybb_connect.checkloggedinuser';
+		
+		$call = array(
+			"guid" => $elgg['elgg_guid'],
+			);
+			
+		$key = array(
+			"public" => null,
+			"private" => null,
+			);
+		
+		//check for 'http://' in url
+		if (!preg_match('/^https?:\/\//', $url)) {
+			$url = 'http://' . $url;
+		}
+		
+		//$url is changed to the full url after the call
+		$result = send_api_get_call($url, $call, $key);
+		
+		$log->LogDebug('Called to: '.$url);
+		
+		//check for $result
+		$json_output = json_decode($result);
+		$log->LogDebug('The returned value is '.print_r($json_output,true));
+		
+		//something wrong with Elgg plugin
+		if ($json_output->{'runtime_errors'})
+			return true;
+		
+		if ($json_output->{'status'}==0 && $json_output->{'result'}>0)
+		{
+			//user is already logged in, no need to authenticate
+			$log->LogDebug('User is already logged in');
+			return true;
+		}
+		
+		//=========================================================
+		//call elgg api to authenticate user and return the cookie to the browser
+		$url = $_SERVER['HTTP_HOST'].'/elgg/services/api/rest/json/?method=mybb_connect.authenticateuser';
+		
+		$call = array(
+			"username" => $mybb->user['username'],
+			"password" => $mybb->user['password'],
+			);
+			
+		$key = array(
+			"public" => null,
+			"private" => null,
+			);
+		
+		//check for 'http://' in url
+		if (!preg_match('/^https?:\/\//', $url)) {
+			$url = 'http://' . $url;
+		}
+		
+		//$url is changed to the full url after the call
+		$result = send_api_get_call($url, $call, $key);
+		
+		$log->LogDebug('Called to: '.$url);
+		
+		//check for $result
+		$json_output = json_decode($result);
+		$log->LogDebug('The returned value is '.print_r($json_output,true));
+		
+		//something wrong with Elgg plugin
+		if ($json_output->{'runtime_errors'})
+			return true;
+		
+		if ($json_output->{'status'}==0 && $json_output->{'result'}>0)
+		{
+			$log->LogDebug('Successfully logged in Elgg');
+		}
 	}
 	else
 	{
-		//migrate to elgg and update db
-		$log->LogDebug("Not Found Elgg id");
+		$log->LogDebug("Not Found Elgg id - migrate to Elgg");
 		
+		//=========================================================
 		//call elgg api to create user
-		$eggusername = $mybb->user['username'];
-		$eggpassword = $mybb->user['password'];
-		$eggemail = $mybb->user['email'];
 		$url = $_SERVER['HTTP_HOST'].'/elgg/services/api/rest/json/?method=mybb_connect.registeruser';
 		
 		$call = array(
@@ -141,8 +224,14 @@ function elgg_connect_global_start()
 		//check for $result
 		$json_output = json_decode($result);
 		$log->LogDebug('The returned value is '.print_r($json_output,true));
+		
+		//something wrong with Elgg plugin
+		if ($json_output->{'runtime_errors'})
+			return true;
+		
 		if ($json_output->{'status'}==0 && $json_output->{'result'}>0)
 		{
+			//=========================================================
 			//store elgg user profile in mybb		
 			$elg_entity=array(
 				'mbb_uid' => $mybb->user['uid'],
@@ -153,6 +242,8 @@ function elgg_connect_global_start()
 				'created_date' => TIME_NOW,
 			);
 			$db->insert_query("elggconnect_users", $elg_entity);
+			
+			$log->LogDebug('Successfully migrated to Elgg');
 		}
 	}
 }
