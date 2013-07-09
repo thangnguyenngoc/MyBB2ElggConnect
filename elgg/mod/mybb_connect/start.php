@@ -68,7 +68,7 @@ function mybb_connect_register_user($username, $password, $email) {
 	if ($elgg_user)	//user already exist
 	{
 		$log->LogDebug('Existing user: '.$username.'. Registration cancelled.');
-		return SuccessResult::getInstance(0);
+		return SuccessResult::getInstance($elgg_user->{'guid'});
 	}
 
 	$log->LogDebug('Start to register new user: '.$username);

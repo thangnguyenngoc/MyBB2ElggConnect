@@ -48,17 +48,72 @@ function elgg_connect_info()
  */
 function elgg_connect_install()
 {
-global $db;
-$db->write_query("
-	CREATE TABLE IF NOT EXISTS ".TABLE_PREFIX."elggconnect_users
-	(`id` int(10) NOT NULL auto_increment,
-	`mbb_uid` int(10) NOT NULL default '0',
-	`mybb_username` varchar(120) NOT NULL DEFAULT '',
-	`mybb_email` varchar(120) NOT NULL DEFAULT '',
-	`elgg_guid` bigint(20) unsigned NOT NULL,
-	`elgg_password` varchar(32) NOT NULL DEFAULT '',
-	`created_date` bigint(30) NOT NULL DEFAULT '0',
-	PRIMARY KEY  (`id`))");
+	global $db;
+	//Create the table
+	$db->write_query("
+		CREATE TABLE IF NOT EXISTS ".TABLE_PREFIX."elggconnect_users
+		(`id` int(10) NOT NULL auto_increment,
+		`mbb_uid` int(10) NOT NULL default '0',
+		`mybb_username` varchar(120) NOT NULL DEFAULT '',
+		`mybb_email` varchar(120) NOT NULL DEFAULT '',
+		`elgg_guid` bigint(20) unsigned NOT NULL,
+		`elgg_password` varchar(32) NOT NULL DEFAULT '',
+		`created_date` bigint(30) NOT NULL DEFAULT '0',
+		PRIMARY KEY  (`id`))");
+	
+	$query = $db->query("SELECT MAX(disporder) as disporder
+                         FROM ".TABLE_PREFIX."settinggroups");
+    $row = $db->fetch_array($query);
+    $disporder = $row['disporder'] + 1;
+	
+	//Create the settings
+	$setting_group = array(
+		'name'			=> 'elggconnect',
+		'title'			=> 'Elgg Connect Settings',
+		'description'	=> 'Settings for Elgg Connect.',
+		'disporder'		=> $disporder,
+		'isdefault'		=> 0
+	);
+	$db->insert_query("settinggroups", $setting_group);
+    $gid = intval($db->insert_id());
+	
+	$disp = 1;
+
+	$myplugin_setting = array(
+		'name'			=> 'elggconnect_setting1',
+		'title'			=> 'Menu name',
+		'description'	=> 'The text of menu item on Mybb Header',
+		'optionscode'	=> 'text',
+		'value'			=> 'Elgg connect!',
+		"disporder"		=> $disp++,
+        "gid"			=> $gid,
+	);
+	$db->insert_query('settings', $myplugin_setting);
+	
+	$myplugin_setting = array(
+		'name'			=> 'elggconnect_setting2',
+		'title'			=> 'Elgg url',
+		'description'	=> 'Url of Elgg site',
+		'optionscode'	=> 'text',
+		'value'			=> $_SERVER['HTTP_HOST'],
+		"disporder"		=> $disp++,
+        "gid"			=> $gid,
+	);
+	$db->insert_query('settings', $myplugin_setting);
+	
+	$myplugin_setting = array(
+		'name'			=> 'elggconnect_setting3',
+		'title'			=> 'Elgg Authentication Key',
+		'description'	=> 'Must set this value in Elgg to connect',
+		'optionscode'	=> 'text',
+		'value'			=> 'elggconnect',
+		"disporder"		=> $disp++,
+        "gid"			=> $gid,
+	);
+	$db->insert_query('settings', $myplugin_setting);
+
+	// This updates the ./inc/settings.php file.
+	rebuild_settings();
 }
 
 
@@ -78,6 +133,11 @@ global $db;
 
 // Drop the Table
 $db->drop_table("elggconnect_users");
+
+//Drop the settings
+$db->write_query("DELETE FROM ".TABLE_PREFIX."settings WHERE name IN ('elggconnect_setting1','elggconnect_setting2','elggconnect_setting3')");
+$db->write_query("DELETE FROM ".TABLE_PREFIX."settinggroups WHERE name = 'elggconnect'");
+rebuild_settings(); 
 }
 
 function elgg_connect_activate()
@@ -119,7 +179,7 @@ function elgg_connect_global_start()
 		
 		//=========================================================
 		//call elgg api to check if user is already logged in
-		$url = $_SERVER['HTTP_HOST'].'/elgg/services/api/rest/json/?method=mybb_connect.checkloggedinuser';
+		$url = $mybb->settings['elggconnect_setting2'].'/elgg/services/api/rest/json/?method=mybb_connect.checkloggedinuser';
 		
 		$call = array(
 			"guid" => $elgg['elgg_guid'],
