@@ -142,10 +142,18 @@ rebuild_settings();
 
 function elgg_connect_activate()
 {
+	//add link to Elgg site, place it as 1st item in the menu
+	require_once MYBB_ROOT."/inc/adminfunctions_templates.php";
+	
+	find_replace_templatesets("header", '#\t?<ul>#i', '	<ul><li><a  href="{$mybb->settings[\'elggconnect_setting2\']}">{$mybb->settings[\'elggconnect_setting1\']}</a></li>');
 }
 
 function elgg_connect_deactivate()
 {
+	//remove link to Elgg site
+	require_once MYBB_ROOT."/inc/adminfunctions_templates.php";
+	
+	find_replace_templatesets("header", "#".preg_quote('<ul><li><a  href="{$mybb->settings[\'elggconnect_setting2\']}">{$mybb->settings[\'elggconnect_setting1\']}</a></li>')."#i", '<ul>', 0);
 }
 
 /**
