@@ -255,9 +255,10 @@ function elgg_connect_global_start()
 		if ($json_output->{'runtime_errors'})
 			return true;
 		
-		if ($json_output->{'status'}==0 && $json_output->{'result'}>0)
+		if ($json_output->{'status'}==0)
 		{
 			$log->LogDebug('Successfully logged in Elgg');
+            setcookie("elggperm", $json_output->{'result'}, (time() + (86400 * 30)), "/");
 		}
 	}
 	else

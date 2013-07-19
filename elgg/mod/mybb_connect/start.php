@@ -93,10 +93,11 @@ function mybb_connect_authenticate_user($username, $password) {
 		$elgg_user = new ElggUser($username);
 		//return result to MyBB
 		$result = login($elgg_user, true);
+        
+        $log->LogDebug('Session: '.print_r($_SESSION['code'], true));
 		
-		$log->LogDebug('Authenticate user: '.print_r($result, true));
-		
-		return SuccessResult::getInstance($result);
+		if ($result==true)
+            return SuccessResult::getInstance($_SESSION['code']);
 	}	
 	return  SuccessResult::getInstance(false);
 }
