@@ -1,21 +1,33 @@
 <?php
 /**
- * Mybb Connect settings
+ * Groups plugin settings
  */
 
-$data = array(
-	'enable_authenticationkey' => array(
-		'type' => 'checkbox',
-		'value' => 1,
-		'checked' => elgg_get_plugin_setting('enable_authenticationkey', 'mybbconnect') == 1,
-	),
+// set default value
+if (!isset($vars['entity']->enable_authenticationkey)) {
+	$vars['entity']->enable_authenticationkey = 1;
+}
 
-	'authentication_key' => array(
-		'type' => 'text',
-		'value' => elgg_get_plugin_setting('authentication_key', 'mybbconnect'),
-	),
-);
+// set default value
+if (!isset($vars['entity']->authentication_key)) {
+	$vars['entity']->authentication_key = 'mybbconnect';
+}
 
-$form_vars = array('id' => 'mybbconnect-settings-form', 'class' => 'elgg-form-settings');
-$body_vars = array('data' => $data);
-echo elgg_view_form('mybbconnect/settings', $form_vars, $body_vars);
+echo '<div>';
+echo elgg_echo('mybbconnect:enable_authenticationkey');
+echo ' ';
+echo elgg_view('input/checkbox', array(
+	'name' => 'params[enable_authenticationkey]',	
+	'value' => $vars['entity']->enable_authenticationkey,
+	'checked' => $vars['entity']->enable_authenticationkey==1,
+));
+echo '</div>';
+
+echo '<div>';
+echo elgg_echo('mybbconnect:authentication_key');
+echo ' ';
+echo elgg_view('input/text', array(
+	'name' => 'params[authentication_key]',
+	'value' => $vars['entity']->authentication_key,
+));
+echo '</div>';
