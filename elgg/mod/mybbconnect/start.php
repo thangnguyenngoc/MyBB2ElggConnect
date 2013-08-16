@@ -26,6 +26,7 @@ function mybb_connect_init() {
                  array( 'username' => array ('type' => 'string'),
                        'password' => array ('type' => 'string'),
                        'email' => array ('type' => 'string'),
+                       'authentication_key' => array ('type' => 'string'),
                      ),
                  'MyBB connect - register new user to Elgg',
                  'GET',
@@ -37,6 +38,7 @@ function mybb_connect_init() {
                 "mybb_connect_authenticate_user", 
                  array( 'username' => array ('type' => 'string'),
                        'password' => array ('type' => 'string'),
+                       'authentication_key' => array ('type' => 'string'),
                      ),
                  'MyBB connect - authenticate an user to Elgg',
                  'GET',
@@ -47,6 +49,7 @@ function mybb_connect_init() {
 	expose_function("mybb_connect.checkloggedinuser", 
                 "mybb_connect_checkloggedin_user", 
                  array( 'guid' => array ('type' => 'int'),
+                        'authentication_key' => array ('type' => 'string'),
                      ),
                  'MyBB connect - check if a guid is already logged in Elgg. If another guid logged in, force it to log out',
                  'GET',
@@ -56,11 +59,14 @@ function mybb_connect_init() {
 }
 
 //sample call: http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.registeruser&username=test&password=123&email=test@email.com
-function mybb_connect_register_user($username, $password, $email) {
+function mybb_connect_register_user($username, $password, $email, $authentication_key) {
 	//todo: check if the request comes from the same server
 	require_once '../../engine/lib/users.php';
 	require_once '../../engine/classes/SuccessResult.php';
 	require_once 'KLogger.php';
+    
+    if (!is_valid_authentication_key($authentication_key))
+        return SuccessResult::getInstance(false);
 	
 	$log = new KLogger(dirname(__FILE__), KLogger::DEBUG );
 	
@@ -79,12 +85,15 @@ function mybb_connect_register_user($username, $password, $email) {
 }
 
 //sample call: http://127.0.0.1/elgg/services/api/rest/xml/?method=mybb_connect.authenticateuser&username=test&password=123
-function mybb_connect_authenticate_user($username, $password) {
+function mybb_connect_authenticate_user($username, $password, $authentication_key) {
 	//todo: check if the request comes from the same server
 	require_once '../../engine/lib/sessions.php';
 	require_once '../../engine/classes/SuccessResult.php';
 	require_once '../../engine/classes/ElggUser.php';
 	require_once 'KLogger.php';
+    
+    if (!is_valid_authentication_key($authentication_key))
+        return SuccessResult::getInstance(false);
 	
 	$log = new KLogger(dirname(__FILE__), KLogger::DEBUG );
 	
@@ -102,11 +111,14 @@ function mybb_connect_authenticate_user($username, $password) {
 	return  SuccessResult::getInstance(false);
 }
 
-function mybb_connect_checkloggedin_user($guid)
+function mybb_connect_checkloggedin_user($guid, $authentication_key)
 {
 	require_once '../../engine/lib/sessions.php';
 	require_once '../../engine/classes/SuccessResult.php';
 	require_once 'KLogger.php';
+    
+    if (!is_valid_authentication_key($authentication_key))
+        return SuccessResult::getInstance(false);
 	
 	$log = new KLogger(dirname(__FILE__), KLogger::DEBUG );
 	
@@ -129,4 +141,17 @@ function mybb_connect_checkloggedin_user($guid)
 		//return the guid 
 		return SuccessResult::getInstance($current_guid);
 	}
+}
+
+function is_valid_authentication_key($authentication_key)
+{
+    if (get_plugin_setting('enable_authenticationkey', 'elggconnect')==0)
+        return true;
+        
+    $key = get_plugin_setting('authentication_key', 'elggconnect');
+    
+    if (strcmp($authentication_key, $key)==0)
+        return true;
+        
+    return false;
 }

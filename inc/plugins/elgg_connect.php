@@ -192,19 +192,8 @@ function elgg_connect_global_start()
 		$call = array(
 			"guid" => $elgg['elgg_guid'],
 			);
-			
-		$key = array(
-			"public" => null,
-			"private" => null,
-			);
-		
-		//check for 'http://' in url
-		if (!preg_match('/^https?:\/\//', $url)) {
-			$url = 'http://' . $url;
-		}
-		
-		//$url is changed to the full url after the call
-		$result = send_api_get_call($url, $call, $key);
+            
+        $result = call_elgg_api($url, $call);
 		
 		$log->LogDebug('Called to: '.$url);
 		
@@ -231,19 +220,8 @@ function elgg_connect_global_start()
 			"username" => $mybb->user['username'],
 			"password" => $mybb->user['password'],
 			);
-			
-		$key = array(
-			"public" => null,
-			"private" => null,
-			);
-		
-		//check for 'http://' in url
-		if (!preg_match('/^https?:\/\//', $url)) {
-			$url = 'http://' . $url;
-		}
-		
-		//$url is changed to the full url after the call
-		$result = send_api_get_call($url, $call, $key);
+            
+        $result = call_elgg_api($url, $call);
 		
 		$log->LogDebug('Called to: '.$url);
 		
@@ -275,18 +253,7 @@ function elgg_connect_global_start()
 			"email" => $mybb->user['email'],
 			);
 			
-		$key = array(
-			"public" => null,
-			"private" => null,
-			);
-		
-		//check for 'http://' in url
-		if (!preg_match('/^https?:\/\//', $url)) {
-			$url = 'http://' . $url;
-		}
-		
-		//$url is changed to the full url after the call
-		$result = send_api_get_call($url, $call, $key);
+		$result = call_elgg_api($url, $call);
 		
 		$log->LogDebug('Called to: '.$url);
 		
@@ -315,6 +282,23 @@ function elgg_connect_global_start()
 			$log->LogDebug('Successfully migrated to Elgg');
 		}
 	}
+}
+
+function call_elgg_api(&$url, array $call) {
+	//check for 'http://' in url
+	if (!preg_match('/^https?:\/\//', $url)) {
+		$url = 'http://' . $url;
+	}
+    
+    array_push($call, "authentication_key", $mybb-> settings['elggconnect_setting3']);
+    
+    $key = array(
+		"public" => null,
+		"private" => null,
+		);
+		
+	//$url is changed to the full url after the call
+    return send_api_get_call($url, $call, $key);
 }
 
 /**
