@@ -235,8 +235,8 @@ function elgg_connect_global_start()
 		
 		if ($json_output->{'status'}==0)
 		{
-			$log->LogDebug('Successfully logged in Elgg');
             setcookie("elggperm", $json_output->{'result'}, (time() + (86400 * 30)), "/");
+			$log->LogDebug('Successfully set cookie for Elgg');
 		}
 	}
 	else
@@ -290,7 +290,8 @@ function call_elgg_api(&$url, array $call) {
 		$url = 'http://' . $url;
 	}
     
-    array_push($call, "authentication_key", $mybb-> settings['elggconnect_setting3']);
+	global $mybb;
+    $call["authentication_key"] = $mybb->settings['elggconnect_setting3'];
     
     $key = array(
 		"public" => null,

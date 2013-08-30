@@ -145,13 +145,19 @@ function mybb_connect_checkloggedin_user($guid, $authentication_key)
 
 function is_valid_authentication_key($authentication_key)
 {
-    if (get_plugin_setting('enable_authenticationkey', 'elggconnect')==0)
-        return true;
-        
-    $key = get_plugin_setting('authentication_key', 'elggconnect');
+	require_once '../../engine/lib/plugins.php';
+	require_once 'KLogger.php';
+	
+	$plugin = elgg_get_plugin_from_id('mybbconnect');
+	$settings = $plugin->getAllSettings();
+	$key = $settings['authentication_key'];
     
     if (strcmp($authentication_key, $key)==0)
         return true;
+	
+	$log = new KLogger(dirname(__FILE__), KLogger::DEBUG );
+	$log->LogDebug('elgg_get_plugin_setting: '.print_r($settings,true));
+	$log->LogDebug('authentication_key: '.$key);
         
     return false;
 }
